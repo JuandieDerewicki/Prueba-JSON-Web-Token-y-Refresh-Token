@@ -31,3 +31,7 @@ namespace PruebaJWT.Controllers
         }
     }
 }
+
+// El Refresh Token actua como un equivalente a las credenciales que se va a encargar de generar los tokens, está almacenada internamente dentro de la aplicacion y no debe ser visualizada por el usuario. Ademas el Refresh Token debe tener mas vida que el JWT
+
+// En SQL se hace una tabla_prueba con la fecha de creacion y la fecha de expiracion, y una columna de esActivo que va a contener una condicion para ver si la fecha de expiracion pasó o no 

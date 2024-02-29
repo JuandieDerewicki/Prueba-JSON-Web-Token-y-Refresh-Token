@@ -10,4 +10,6 @@ public partial class Usuario
     public string? NombreUsuario { get; set; }
 
     public string? Clave { get; set; }
+
+    public virtual ICollection<HistorialRefreshToken> HistorialRefreshTokens { get; set; } = new List<HistorialRefreshToken>();
 }

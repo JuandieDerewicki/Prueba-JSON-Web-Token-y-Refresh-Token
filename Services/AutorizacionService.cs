@@ -7,6 +7,8 @@ using PruebaJWT.Models.Custom;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Mvc;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography;
+using Microsoft.OpenApi.Writers;
 
 namespace PruebaJWT.Services
 {
@@ -63,6 +65,39 @@ namespace PruebaJWT.Services
             // Devolvemos el token creado
             return tokenCreado;
         }
+
+        public string GenerarRefreshToken()
+        {
+            var byteArray = new byte[64]; // Contenido de 64
+            var refreshToken = ""; // Aca va a ir el RefreshToken
+
+            using(var rng = RandomNumberGenerator.Create())
+            {
+                rng.GetBytes(byteArray); // Le pasamos el array de bytes   
+                refreshToken = Convert.ToBase64String(byteArray); // Obtenemos el refresh token 
+            }
+            return refreshToken;    
+        }
+
+        // Metodo para guardar dentro de nuestra tabla HistorialRefreshToken en la base de datos
+        private async Task<AutorizacionResponse> GuardarHistorialRefreshToken(int idUsuario, string token, string refreshToken)
+        {
+            var historialRefreshToken = new HistorialRefreshToken
+            {
+                RefreshToken = refreshToken,
+                Token = token,
+                IdUsuario = idUsuario,
+                FechaCreacion = DateTime.UtcNow,
+                FechaExpiracion = DateTime.UtcNow.AddMinutes(2),
+            }; // Historial para poder crear con los datos de nuestra tabla un nuevo historial de refresh token en nuestra tabla
+
+            await _context.HistorialRefreshTokens.AddAsync(historialRefreshToken); // enviamos a la tabla
+            await _context.SaveChangesAsync(); // guardamos los cambios de manera asincrona
+
+            // Retornamos una autorizacion response pasandole todo lo que recibimos por parametro
+            return new AutorizacionResponse { Token = token, RefreshToken = refreshToken, Resultado = true, Msg = "Ok" };
+        }
+
         public async Task<AutorizacionResponse> DevolverToken(AutorizacionRequest autorizacion)
         {
             // Vamos a encontrar el primero y sino retorna un nulo
@@ -79,8 +114,37 @@ namespace PruebaJWT.Services
 
             string tokenCreado = GenerarToken(usuario_encontrado.IdUsuario.ToString()); // Llamamos al metodo y le pasamos el usuario con sus parametros
 
+            // Ahora hacemos la logica para que tambien devuelva el refresh token creado 
+            string refreshTokenCreado = GenerarRefreshToken();
+
             // Devolvemos el token y le pasamos el token con el resultado y el mensaje creando un nueva autorizacionresponse
-            return new AutorizacionResponse() {  Token = tokenCreado, Resultado = true, Msg = "Ok" };
+            //return new AutorizacionResponse() {  Token = tokenCreado, Resultado = true, Msg = "Ok" };
+
+            // Devolvemos la rta del metodo
+            return await GuardarHistorialRefreshToken(usuario_encontrado.IdUsuario, tokenCreado, refreshTokenCreado);   
+        }
+
+        public async Task<AutorizacionResponse> DevolverRefreshToken(RefreshTokenRequest refreshTokenRequest, int idUsuario)
+        {
+            // Validar si existe el refresh token que estamos enviando, donde primero validamos con la base de datos
+            var refreshTokenEncontrado = _context.HistorialRefreshTokens.FirstOrDefault(x =>
+            x.Token == refreshTokenRequest.TokenExpirado && // el token de la bd tiene que ser igual al expirado
+            x.RefreshToken == refreshTokenRequest.RefreshToken && // Tiene que existir el refresh token 
+            x.IdUsuario == idUsuario);  // El token tiene que corresponder a este usuario
+            
+            if(refreshTokenEncontrado == null)
+            {
+                return new AutorizacionResponse { Resultado = false, Msg = "No existe el refreshToken" };
+            }
+
+            // Generamos el refresh token y el token 
+            var refreshTokenCreado = GenerarRefreshToken();
+            var tokenCreado = GenerarToken(idUsuario.ToString());
+
+            // Llamamos al metodo 
+            return await GuardarHistorialRefreshToken(idUsuario, tokenCreado, refreshTokenCreado);
+
+            // Con esto ya tendriamos el Refresh Token y podemos enviarle al usuario cada vez que solicite un acess token, un jwt junto con su refresh token 
         }
     }
 }

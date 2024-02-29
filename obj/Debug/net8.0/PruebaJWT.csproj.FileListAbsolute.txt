@@ -135,3 +135,4 @@ C:\Users\bocaj\source\repos\CursosPlatzi\PruebaJWT\obj\Debug\net8.0\refint\Prueb
 C:\Users\bocaj\source\repos\CursosPlatzi\PruebaJWT\obj\Debug\net8.0\PruebaJWT.pdb
 C:\Users\bocaj\source\repos\CursosPlatzi\PruebaJWT\obj\Debug\net8.0\PruebaJWT.genruntimeconfig.cache
 C:\Users\bocaj\source\repos\CursosPlatzi\PruebaJWT\obj\Debug\net8.0\ref\PruebaJWT.dll
+C:\Users\bocaj\source\repos\CursosPlatzi\PruebaJWT\obj\Debug\net8.0\PruebaJWT.sourcelink.json
