@@ -110,6 +110,7 @@ namespace PruebaJWT.Services
             if(usuario_encontrado == null)
             {
                 return await Task.FromResult<AutorizacionResponse>(null); // retorno una rta cuando el usuario no se encuentra
+                //return new AutorizacionResponse { Resultado = false, Msg = "Usuario no encontrado" };
             }
 
             string tokenCreado = GenerarToken(usuario_encontrado.IdUsuario.ToString()); // Llamamos al metodo y le pasamos el usuario con sus parametros
